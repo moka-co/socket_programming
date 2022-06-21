@@ -7,7 +7,6 @@
 
 #define BUFSIZE 1024
 
-
 int main(int argc, char *argv[]){
 
         int err, sockfd;

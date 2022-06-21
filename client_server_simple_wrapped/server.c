@@ -6,9 +6,31 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include "wrapped.h"
 
 
 #define BUFSIZE 1024
+
+void makeSockaddr(struct sockaddr_in* struct_address, char* addr, int port, int *len ){
+    struct_address->sin_family = AF_INET;
+    struct_address->sin_addr.s_addr = inet_addr(addr);
+    struct_address->sin_port=port;
+    (*len) = (socklen_t)sizeof(*struct_address);
+}
+
+void Socket(int *server_sockfd){
+    if ( ( (*server_sockfd) = socket(AF_INET, SOCK_STREAM, 0) ) < 0 ){
+            perror("Error on socket!\n");
+            exit(1);
+        }
+}
+
+void Bind(int sockfd, struct sockaddr_in* address ,int len){
+    if ( bind(sockfd, (struct sockaddr*)address, len) != 0 ){
+        perror("Error on binding\n");
+        exit(1);
+    }
+}
 
 void current_time(char *buf){
         int hours, minutes, seconds;
@@ -25,24 +47,20 @@ int main(int argc, char *argv[]){
         int err;
         socklen_t len;
         int server_sockfd, client_sockfd;
-        struct sockaddr_in server_address, client_address;
+        struct sockaddr_in client_address;
+
+        struct sockaddr_in server_address;
+        struct sockaddr_in * ptr_server_address = &server_address;
+
         char buffer[BUFSIZE];
         socklen_t client_len = (socklen_t)BUFSIZE;
 
 		//socket creation:
-        if ( (server_sockfd = socket(AF_INET, SOCK_STREAM, 0) ) < 0 ){
-                perror("Error on socket!\n");
-                exit(-1);
-        }
-
-        server_address.sin_family = AF_INET;
-        server_address.sin_addr.s_addr = inet_addr("127.0.0.1");
-        server_address.sin_port=9734;
-        len = (socklen_t)sizeof(server_address);
-
-		//bind:
-   err = bind(server_sockfd, (struct sockaddr*)&server_address, len);
-        listen(server_sockfd, 5);
+        Socket(&server_sockfd);
+        makeSockaddr(ptr_server_address,"127.0.0.1", 9734, &len);
+        Bind(server_sockfd, ptr_server_address, len);
+        //listen(server_sockfd, 5);
+        Listen(server_sockfd);
 
         while(1){
 			current_time(buffer);
@@ -58,7 +76,6 @@ int main(int argc, char *argv[]){
 				perror("Error on writing on client socket\n");
                 exit(-1);
 			}
-
 
 
 			if ( ( close(client_sockfd) ) == -1 ){
