@@ -11,26 +11,7 @@
 
 #define BUFSIZE 1024
 
-void makeSockaddr(struct sockaddr_in* struct_address, char* addr, int port, int *len ){
-    struct_address->sin_family = AF_INET;
-    struct_address->sin_addr.s_addr = inet_addr(addr);
-    struct_address->sin_port=port;
-    (*len) = (socklen_t)sizeof(*struct_address);
-}
 
-void Socket(int *server_sockfd){
-    if ( ( (*server_sockfd) = socket(AF_INET, SOCK_STREAM, 0) ) < 0 ){
-            perror("Error on socket!\n");
-            exit(1);
-        }
-}
-
-void Bind(int sockfd, struct sockaddr_in* address ,int len){
-    if ( bind(sockfd, (struct sockaddr*)address, len) != 0 ){
-        perror("Error on binding\n");
-        exit(1);
-    }
-}
 
 void current_time(char *buf){
         int hours, minutes, seconds;
