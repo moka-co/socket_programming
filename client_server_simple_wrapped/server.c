@@ -39,14 +39,15 @@ int main(int argc, char *argv[]){
         socklen_t client_len = (socklen_t)BUFSIZE;
 
         Socket(&server_sockfd); //socket creation:
-        makeSockaddr(ptr_server_address,"127.0.0.1", 9735, &len);
+        makeSockaddr(ptr_server_address,"127.0.0.1", 9736, &len);
         Bind(server_sockfd, ptr_server_address, len);
         Listen(server_sockfd);
 
         while(1){
             Accept(&client_sockfd, server_sockfd, ptr_client_address, &client_len );
             counter++;
-            snprintf(buffer, "Client collegati fin ora: %d\n",counter);
+            snprintf(buffer, BUFSIZE, "Client collegati fin ora: %d\n",counter);
+            FullWrite(client_sockfd, buffer, (size_t)BUFSIZE);
             current_time(buffer);
             FullWrite(client_sockfd, buffer, (size_t)BUFSIZE);
             

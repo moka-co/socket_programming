@@ -22,13 +22,15 @@ int main(int argc, char *argv[]){
 
         Socket(&sockfd);
 
-        makeSockaddr(ptr_address,"127.0.0.1", 9735, &len);
+        makeSockaddr(ptr_address,"127.0.0.1", 9736, &len);
 
         Connect(sockfd, ptr_address, len);
 
         FullRead(sockfd, buffer, BUFSIZE);
 
         printf("%s", buffer);
+        FullRead(sockfd, buffer, BUFSIZE);
+        printf("%s",buffer);
         close(sockfd);
 
 
