@@ -55,6 +55,14 @@ void Accept(int * client_sockfd, int server_sockfd, struct sockaddr_in * address
 	}
 }
 
+void Close(int sockfd){
+    if ( ( close(sockfd) ) == -1 ){
+			perror("Error while closing ");
+			exit(1);
+		}
+}
+
+
 void FullWrite(int sockfd, char *buffer, size_t count){
     int nwritten=0;
     size_t nleft = count;
@@ -100,3 +108,4 @@ void FullRead(int sockfd, char *buffer, size_t count){
     }
 
 }
+
