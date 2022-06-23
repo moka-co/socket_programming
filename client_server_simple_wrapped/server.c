@@ -11,7 +11,7 @@
 
 #define BUFSIZE 1024
 
-
+int counter = 0;
 
 void current_time(char *buf){
         int hours, minutes, seconds;
@@ -25,10 +25,12 @@ void current_time(char *buf){
 }
 
 int main(int argc, char *argv[]){
-        int err;
+
         socklen_t len;
         int server_sockfd, client_sockfd;
+
         struct sockaddr_in client_address;
+        struct sockaddr_in * ptr_client_address = &client_address;
 
         struct sockaddr_in server_address;
         struct sockaddr_in * ptr_server_address = &server_address;
@@ -36,33 +38,25 @@ int main(int argc, char *argv[]){
         char buffer[BUFSIZE];
         socklen_t client_len = (socklen_t)BUFSIZE;
 
-		//socket creation:
-        Socket(&server_sockfd);
-        makeSockaddr(ptr_server_address,"127.0.0.1", 9734, &len);
+        Socket(&server_sockfd); //socket creation:
+        makeSockaddr(ptr_server_address,"127.0.0.1", 9735, &len);
         Bind(server_sockfd, ptr_server_address, len);
-        //listen(server_sockfd, 5);
         Listen(server_sockfd);
 
         while(1){
-			current_time(buffer);
-			client_sockfd = accept(server_sockfd,
-								   (struct sockaddr*)&client_address,
-								   &client_len);
-			if (client_sockfd < 1){
-				perror("Error on accepting client!\n");
-                exit(-1);
-			}
-
-			if ( (write(client_sockfd, buffer, BUFSIZE) ) < 0  ){
-				perror("Error on writing on client socket\n");
-                exit(-1);
-			}
+            Accept(&client_sockfd, server_sockfd, ptr_client_address, &client_len );
+            counter++;
+            snprintf(buffer, "Client collegati fin ora: %d\n",counter);
+            current_time(buffer);
+            FullWrite(client_sockfd, buffer, (size_t)BUFSIZE);
+            
 
 
 			if ( ( close(client_sockfd) ) == -1 ){
-				perror("Error on closing\n");
+				perror("Error while closing ");
 				exit(-1);
 			}
-		}
+	}
+
 	exit(0);
 }

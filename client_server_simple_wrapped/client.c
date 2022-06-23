@@ -17,26 +17,16 @@ int main(int argc, char *argv[]){
         struct sockaddr_in address; //address
 
         char buffer[BUFSIZE];
-        /*
-        //socket creation
-        if ( (sockfd = socket(AF_INET, SOCK_STREAM, 0) ) < 0 ){
-                perror("Error on socket!\n");
-                exit(-1);
-        }
-        */
 
         struct sockaddr_in * ptr_address = &address;
 
         Socket(&sockfd);
 
-        makeSockaddr(ptr_address,"127.0.0.1", 9734, &len);
+        makeSockaddr(ptr_address,"127.0.0.1", 9735, &len);
 
         Connect(sockfd, ptr_address, len);
 
-        if ( read(sockfd, buffer, BUFSIZE) == -1 ){
-                perror("Error while reading through the socket\n");
-                exit(1);
-        }
+        FullRead(sockfd, buffer, BUFSIZE);
 
         printf("%s", buffer);
         close(sockfd);
