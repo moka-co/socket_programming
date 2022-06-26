@@ -35,20 +35,6 @@ void current_time(char *buf){
         snprintf(buf, BUFSIZE-1, "%02d:%02d:%02d\n",hours,minutes,seconds);
 }
 
-uint32_t reverse_bytes(uint32_t bytes)
-{
-    uint32_t aux = 0;
-    uint8_t byte;
-    int i;
-
-    for(i = 0; i < 32; i+=8)
-    {
-        byte = (bytes >> i) & 0xff;
-        aux |= byte << (32 - 8 - i);
-    }
-    return aux;
-}
-
 int main(int argc, char *argv[]){
 
         socklen_t len;
@@ -68,7 +54,7 @@ int main(int argc, char *argv[]){
         char *ip;
 
         char buffer[BUFSIZE];
-        socklen_t client_len = (socklen_t)BUFSIZE;
+        socklen_t client_len = sizeof(client_address);
 
         if (argc < 3){
                 fprintf(stderr, "Inserisci un indirizzo e una porta in input\n");
@@ -95,6 +81,15 @@ int main(int argc, char *argv[]){
         while(1){
                 Accept(&client_sockfd, server_sockfd, ptr_client_address, &client_len );
 
+                /*
+                client_sockfd = accept(server_sockfd, (struct sockaddr*)&client_address, &len);
+
+                if ( client_sockfd < 1){
+		            perror("Error while accepting client ");
+                    exit(1);
+	            }
+                */
+
                 if( (pid = fork()) == 0){
                     Close(server_sockfd);
                     offset = count_connections(buffer);
@@ -104,23 +99,11 @@ int main(int argc, char *argv[]){
                     exit(0);
 
                 }else if(pid > 0){
-                    Close(client_sockfd);
                     //Logging
-                    inet_ntop(AF_INET, &client_address.sin_addr, IPaddress, sizeof(IPaddress));
-
-                    struct in_addr raddr = client_address.sin_addr;
-                    ip = inet_ntoa(raddr);
-
-                    struct hostent * chost = gethostbyaddr((const char*)&raddr, sizeof(raddr), AF_INET);
-                    if ( chost == NULL){
-                        printf("Non sono riuscito a risalire a\n");
-                    }else{
-                        printf("Ok\n");
-                    }
-
-                    printf("Nuovo collegamento, IPaddress: %s\n Confronto con inet_nota: %s\n\n", IPaddress, inet_ntoa(client_address.sin_addr) );
+                    printf("\tNuova connessione: %s\n", inet_ntoa(client_address.sin_addr));
                     //Increase counter
                     counter++;
+                    Close(client_sockfd);
                 }else{
                     perror("Error while forking\n");
                     exit(1);

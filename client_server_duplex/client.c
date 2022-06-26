@@ -27,7 +27,6 @@ int main(int argc, char *argv[]){
         Connect(sockfd, ptr_address, len);
 
         snprintf(buffer,BUFSIZE,"12345\n");
-        //FullRead(sockfd, buffer, BUFSIZE);
         FullWrite(sockfd, buffer, BUFSIZE);
 
         FullRead(sockfd, buffer, BUFSIZE);

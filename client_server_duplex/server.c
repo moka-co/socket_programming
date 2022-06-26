@@ -35,21 +35,7 @@ void current_time(char *buf){
         snprintf(buf, BUFSIZE-1, "%02d:%02d:%02d\n",hours,minutes,seconds);
 }
 
-int count_letters(char *string){
-    int i=0, c=0;
-    int try_size = (int)sizeof(string);
 
-    printf("try_size: %d\n", try_size);
-
-    while (string[i] != '\0'){
-        if (string[i] != ' '){
-            c++;
-        }
-        i++;
-    }
-    printf("c: %d\n",c);
-    return c;
-}
 
 int main(int argc, char *argv[]){
 

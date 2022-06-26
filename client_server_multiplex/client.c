@@ -42,11 +42,9 @@ int main(int argc, char *argv[]){
                 exit(1);
         }
 
-
         char *stuff = host->h_addr_list[0];
         struct hostent * host2 = gethostbyaddr( stuff, sizeof(stuff), AF_INET);
         print_hostent(host2);
-
 
         IPaddress = inet_ntoa( *((struct in_addr*)host->h_addr_list[0]) );
 
@@ -54,12 +52,21 @@ int main(int argc, char *argv[]){
 
         makeSockaddr(ptr_address, IPaddress, port, &len);
 
-        Connect(sockfd, ptr_address, len);
+        Connect(sockfd, ptr_address, len); // Connetti
+
+        //int c=5;
+        //FullRead(sockfd, buffer, BUFSIZE);
+        //printf("%s\n",buffer);
+        printf("Inserisci una stringa\n");
+
+        fgets(buffer, BUFSIZE, stdin);
+        FullWrite(sockfd, buffer, BUFSIZE);
 
         FullRead(sockfd, buffer, BUFSIZE);
 
-        printf("%s", buffer);
-        Close(sockfd);
+        printf("%s\n", buffer);
+
+        Close(sockfd); //Chiudi connessione
 
 
         exit(0);
