@@ -12,18 +12,6 @@
 
 #define BUFSIZE 1024
 
-int count_letters(char *string){
-    int i=0, c=0;
-
-    while (string[i] != '\0'){
-        if (string[i] != ' ' && string[i] != '\n' && string[i] != '\0'){
-            c++;
-        }
-        i++;
-    }
-
-    return c;
-}
 
 int main(int argc, char *argv[]){
 
@@ -31,7 +19,7 @@ int main(int argc, char *argv[]){
         socklen_t len;
         struct sockaddr_in address; //address
 
-        char buffer[BUFSIZE];
+        char i_buffer[BUFSIZE],o_buffer[BUFSIZE+3];
         char *IPaddress;
 
         struct sockaddr_in * ptr_address = &address;
@@ -70,13 +58,25 @@ int main(int argc, char *argv[]){
                 }
         }
         */
-        fgets(buffer, BUFSIZE, stdin);
+        fgets(i_buffer, BUFSIZE, stdin);
+        for(int i=0;i<16;i++){
+                if (i_buffer[i]=='\n'){
+                        i_buffer[i]='\0';
+                }
+        }
 
-        FullWrite(sockfd, buffer, BUFSIZE);
+        printf("Scrivi 0 per invalidare il green pass, scrivi 1 per riprisintare la validità\n");
+        char i;
+        i = (char)  fgetc(stdin);
+        c = atoi(&i);
 
-        FullRead(sockfd, buffer, BUFSIZE);
+        snprintf(o_buffer, BUFSIZE+5, "CT|%s:%d", i_buffer, c );
 
-        printf("%s\n", buffer);
+        FullWrite(sockfd, o_buffer, BUFSIZE);
+
+        FullRead(sockfd, i_buffer, BUFSIZE);
+
+        printf("%s\n", i_buffer);
 
         Close(sockfd); //Chiudi connessione
 

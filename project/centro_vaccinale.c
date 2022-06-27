@@ -24,6 +24,28 @@ time_t rawtime;
     return timeinfo;
 }
 
+// TODO
+// - usare due socket diverse
+// - restituire un messaggio di errore al client in caso il codice sia già stato registrato
+
+const char* parse_string(char *string, size_t sz){
+
+        int c=0;
+
+        for(int i=0; i<sz;i++){
+                if (string[i+1] == ' ' || string[i+1] == '\n' || string[i+1] == '\0'){
+                        c = 1 + i;
+                        i = 20;
+                }
+        }
+
+        char *newstr = (char *)malloc(sizeof(char)*c);
+
+        strncpy(newstr,string,c);
+
+        return newstr;
+}
+
 
 int main(int argc, char *argv[]){
 
@@ -38,8 +60,8 @@ int main(int argc, char *argv[]){
         struct sockaddr_in * ptr_address = &addr;
         struct sockaddr_in * ptr_peer_address = &peer_addr;
 
-        if (argc < 3){
-                fprintf(stderr, "Inserisci un indirizzo e una porta in input\n");
+        if (argc < 5){
+                fprintf(stderr, "Inserisci un indirizzo e una porta in input da cui un client può connettersi e un indirizzo e la porta del server V\n");
                 exit(1);
         }
 
@@ -70,23 +92,42 @@ int main(int argc, char *argv[]){
         // Valido per 3 mesi
         struct tm* timeinfo = validity();
         //Connettiti a ServerV
-        printf("Inserisci l'indirizzo o il nome simbolico del server a cui connettersi\n");
-        fgets(i_buffer,BUFSIZE, stdin);
-        strncpy(IPaddress, i_buffer, (size_t) 16 );
-        printf("Inserito: %s\n",IPaddress);
-        printf("Inserisci la porta aperta dal processo server\n");
-        fgets(i_buffer, BUFSIZE, stdin);
-        port = atoi(i_buffer);
-        printf("Inserito: %d\n", port);
+        //printf("Inserisci l'indirizzo o il nome simbolico del server a cui connettersi\n");
+        //fgets(i_buffer,(size_t)16, stdin);
+        //strncpy(IPaddress, i_buffer, (size_t)16);
+
+        //const char *ip = parse_string(IPaddress,16);
+
+        struct hostent *host2 = gethostbyname(argv[3]);
+
+        if (host2 != NULL){
+                IPaddress = inet_ntoa( *((struct in_addr*)host2->h_addr_list[0]) );
+        }else{
+                herror("Error: ");
+                exit(1);
+        }
+
+        //printf("Inserisci la porta aperta dal processo server\n");
+        //fgets(i_buffer, BUFSIZE, stdin);
+        port = atoi(argv[4]);
 
         Socket(&sockfd);
         makeSockaddr(ptr_address, IPaddress, port, &len);
         Connect(sockfd, ptr_address, len); // Connetti
 
-        snprintf(o_buffer, BUFSIZE, "%s\t%s",code,asctime(timeinfo));
+        memset(o_buffer,0,BUFSIZE);
+        for(int i=0; i<17; i++){
+                if (code[i]=='\n')
+                        code[i]='\0';
+        }
+
+        snprintf(o_buffer, BUFSIZE, "CV|%s:%d-%d\n",code,timeinfo->tm_mon, 1900+timeinfo->tm_year);
+        printf("obuffer: %s\n",o_buffer);
+
         FullWrite(sockfd, o_buffer, BUFSIZE);
         FullRead(sockfd, i_buffer, BUFSIZE);
         printf("%s\n",i_buffer);
+        Close(sockfd);
 
         exit(0);
 }

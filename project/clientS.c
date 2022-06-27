@@ -31,7 +31,7 @@ int main(int argc, char *argv[]){
         socklen_t len;
         struct sockaddr_in address; //address
 
-        char buffer[BUFSIZE];
+        char i_buffer[BUFSIZE],o_buffer[BUFSIZE+3];
         char *IPaddress;
 
         struct sockaddr_in * ptr_address = &address;
@@ -70,13 +70,14 @@ int main(int argc, char *argv[]){
                 }
         }
         */
-        fgets(buffer, BUFSIZE, stdin);
+        fgets(i_buffer, BUFSIZE, stdin);
+        snprintf(o_buffer, BUFSIZE+3, "CS|%s", i_buffer );
 
-        FullWrite(sockfd, buffer, BUFSIZE);
+        FullWrite(sockfd, o_buffer, BUFSIZE);
 
-        FullRead(sockfd, buffer, BUFSIZE);
+        FullRead(sockfd, i_buffer, BUFSIZE);
 
-        printf("%s\n", buffer);
+        printf("%s\n", i_buffer);
 
         Close(sockfd); //Chiudi connessione
 

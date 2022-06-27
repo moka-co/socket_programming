@@ -14,7 +14,13 @@
 
 #define BUFSIZE 1024
 
+//TODO
+//Togliere le routine non usate
+//Mettere le routine usate da più funzioni in un header
+//Gestire il caso di Green Pass scaduto per CS
+
 int counter = 0;
+const char* filename = "data"; 
 
 int count_connections(char *buffer){ //return written bytes
         int bwritten = 0;
@@ -50,6 +56,152 @@ int count_letters(char *string){
     return c;
 }
 
+int save_data(char *buffer, size_t sz){
+	
+	FILE* data= fopen(filename,"r"); //apertura file in modalità "append"
+
+    char newcode[16];
+    int newmonth;
+    int newyear;
+
+    sscanf(buffer,"%[a-zA-Z0-9]:%d-%d", newcode, &newmonth, &newyear);
+    perror("scanf: ");
+    printf("buffer: %s\nletto: %s e %d e %d",buffer, newcode,newmonth,newyear);
+
+    char wbuffer[BUFSIZE];
+    memset(wbuffer, 0, BUFSIZE);
+    snprintf(wbuffer,BUFSIZE,"%s:%d-%d:%d",newcode, newmonth, newyear, 1);
+
+    char oldcode[16];
+    int oldmonth;
+    int oldyear;
+
+    char readbuffer[sz];
+    memset(readbuffer, 0, sz);
+
+    int flag = 0;
+    int c=0;
+
+    if (data){
+        printf("\n____\n");
+	    while(fgets(readbuffer, sz, data)){
+            printf("%s\n",readbuffer);
+            c = count_letters(buffer);
+            if ( strncmp(readbuffer, buffer, c) == 0){
+                printf("Codice fiscale già inserito\n");
+                return 1;
+            }
+
+        }
+        printf("____\n");
+        fclose(data);
+    }
+
+    //while ( (data = fopen(filename,"a")) == NULL );
+    data = fopen(filename,"a");
+    if (data){
+
+        if (flag == 0){
+            fprintf(data, "%s", wbuffer);
+        }
+
+
+	    fclose(data);
+    }
+
+	return 0;
+}
+
+int is_valid(char *buffer, size_t sz){
+
+    FILE* data= fopen(filename,"r");
+    char readbuffer[sz];
+    int c=0;
+
+    if (data){
+        printf("\n____\n");
+	    while(fgets(readbuffer, sz, data)){
+            printf("%s\n",readbuffer);
+            c = count_letters(buffer);
+            if ( strncmp(readbuffer, buffer, c) == 0){
+                char oldcode[16];
+                memset(oldcode, 0, 16);
+                int oldmonth=0;
+                int oldyear=0;
+                int valid=1;
+                sscanf(readbuffer, "%[a-zA-Z0-9]:%d-%d:%d", oldcode, &oldmonth, &oldyear, &valid);
+                return valid;
+            }
+
+        }
+        printf("____\n");
+        fclose(data);
+        return -1; //codice non registrato
+    }
+
+}
+
+int validate(char *buffer, size_t sz){
+    FILE* data= fopen(filename,"r+"); //il file data è aperto in modalità scrittura e lettura in questo caso perché dobbiamo aggiornare delle stringhe
+    char readbuffer[sz]; //readbuffer è il buffer dove si tengono le righe che si leggono nel file data
+    int c=0; //c serve per tenere conto del numero di lettere in una stringa
+
+    int validity=0; //validity dovrà tenere il nuovo valore da sostituire, 0 indica green pass invalido, 1 valido
+    char newcode[16]; //Qui si salva il codice che viene passato in input
+    char savedcode[16]; //Qui si salva ad ogni ciclo del while, il codice letto
+    char tmpcode[16]; //Un altro buffer che FORSE RIESCO A TOGLIERE
+
+    memset(newcode, 0, 16); 
+    memset(savedcode, 0, 16);
+    strncpy(newcode, buffer, 16); //16 
+
+    sscanf(buffer, "%[a-zA-Z0-9]\n:%d", tmpcode, &validity); //Dal buffer dobbiamo prenderci il codice e validity
+
+    char *token_newcode = strtok(newcode, ":"); //Togliamo via tutto quello che c'è dopo ":" che non fa parte del codice del green pass
+    char *token_savedcode;
+
+    c = count_letters(newcode); //Il numero di lettere senza spazi o caratteri a capo, ci serve per la funzione strncmp
+
+    long old_offset=0, new_offset=0; //Gli offset servono per aggiornare i dati nel file
+
+    if (data){
+	    while(fgets(readbuffer, sz, data)){
+            //L'offset vecchio serve per usare fseek dopo e tornare al punto nel file dove va scritto
+            old_offset = new_offset;
+            new_offset = ftell(data);
+            
+            strncpy(savedcode, readbuffer, 16); //Ci prendiamo il codice salvato (cioè i primi 16 caratteri) e lo mettiamo in savedcode
+            token_savedcode =  strtok(savedcode, ":"); //Però il codice può essere più corto di 16 caratteri massimi (temporaneo) quindi viene tagliata la parte dopo i :
+            //Effettivamente ^^ potrebbe essere ridondante ed essere tolto in favore di readbuffer.
+
+            c = count_letters(token_newcode); //Questo potrebbe essere tolto <--------__TEST
+            
+            if ( strncmp(token_savedcode, token_newcode, c) == 0){ //trovato il codice da dover validare/invalidare
+                
+                int oldmonth=0; //Probabilmente questi starebbero meglio in una struct
+                int oldyear=0;
+                int valid=1;
+
+                sscanf(readbuffer, "%[a-zA-Z0-9]:%d-%d:%d", tmpcode, &oldmonth, &oldyear, &valid); //parsing della stringa e prendiamo i valori di interesse nella variabile
+
+                if ( valid != validity){ //Se non c'è alcun cambiamento da fare, non ha senso scrivere
+                    fseek(data, old_offset, SEEK_SET);
+                    fprintf(data,"%s:%d-%d:%d\n", token_savedcode, oldmonth, oldyear, validity); //I valori presi con la sscanf precedente, solo con validity che è cambiato o uguale.
+
+                }
+    
+                fclose(data);
+                return validity;
+
+            }
+
+        }
+        fclose(data);
+        return -1; //codice non registrato
+    }
+
+}
+
 int main(int argc, char *argv[]){
 
         socklen_t len;
@@ -65,7 +217,7 @@ int main(int argc, char *argv[]){
         struct sockaddr_in server_address;
         struct sockaddr_in * ptr_server_address = &server_address;
 
-        char IPaddress[INET6_ADDRSTRLEN];
+        char IPaddress[INET_ADDRSTRLEN];
         char *ip;
 
         char i_buffer[BUFSIZE], o_buffer[BUFSIZE];
@@ -146,17 +298,16 @@ int main(int argc, char *argv[]){
                             perror("Errore lettura");
                             exit(1);
                         }
-                        printf("buffer: %s\n",i_buffer);
 
                         if (nread == 0){ //Se la connessione è chiusa
                             fd_open[i]=0; //Setta nell'array che il relativo fd è chiuso
                             if (maxfd == i){ //Se il socket attivo è quello con numero massimo
-                                while(fd_open[--i]==0){
+                                while(fd_open[--i]==0){ //cicla decrementando i finché non trovi un socket descriptor attivo
                                     Close(i+1); //Per evitare di fare overflow di descrittori di file dentro fd_open
                                 }
                                 Close(i+1);            
-                                 //cicla decrementato i finché non ne trovi uno settato ad 1
-                                maxfd=i; //Quello sarà il nuovo fd
+                                 
+                                maxfd=i; //Il sockfd trovato sarà il nuovo massimo
                                 break;
                                 
                             }
@@ -164,45 +315,48 @@ int main(int argc, char *argv[]){
                         }
 
                         if (nread > 0){
-                            snprintf(o_buffer, BUFSIZE, "Codice fiscale registrato con successo\n");
-                            FullWrite(i, o_buffer, (size_t)BUFSIZE);
+                            printf("buffer: %s\n",i_buffer);
+                            char l_buffer[BUFSIZE];
+                            strcpy(l_buffer, i_buffer);
+                            if ( (strncmp(l_buffer,"CV",2)) == 0){
+                                if ( save_data(l_buffer+3, (size_t)BUFSIZE) == 0){
+                                    snprintf(o_buffer, BUFSIZE, "Codice fiscale registrato con successo\n");
+                                }else{
+                                    snprintf(o_buffer, BUFSIZE, "Codice fiscale già inserito\n");
+                                }
+                            
+                                FullWrite(i, o_buffer, (size_t)BUFSIZE);
+
+                            }else if( (strncmp(l_buffer,"CS",2)) == 0 ){
+
+                                int e = is_valid(l_buffer+3, BUFSIZE); //Controlla la validità del certificato
+                                if ( e == 1  ){
+                                    snprintf(o_buffer, BUFSIZE, "Codice fiscale valido\n");
+                                }else if( e == 0 ){
+                                    snprintf(o_buffer, BUFSIZE, "Codice fiscale NON valido\n");
+                                }else{
+                                    snprintf(o_buffer, BUFSIZE, "Codice fiscale NON registrato\n");
+                                }
+
+                                FullWrite(i, o_buffer, (size_t)BUFSIZE);
+                            }else if( (strncmp(l_buffer,"CT",2)) == 0){
+                                int e = validate(l_buffer+3, BUFSIZE);
+                                if (e == 0){
+                                    snprintf(o_buffer, BUFSIZE, "Il green pass corrispondente è stato invalidato\n");
+                                }else if (e==1){
+                                    snprintf(o_buffer, BUFSIZE, "Il green pass corrispondente è ora valido\n");
+                                }else{
+                                    snprintf(o_buffer, BUFSIZE, "Codice fiscale non trovato\n");
+                                }
+
+                                FullWrite(i, o_buffer, (size_t)BUFSIZE);
+                            }else{
+                                FullWrite(i,"Errore non capisco la richiesta\n", BUFSIZE);
+                            }
+
                         }
                     }
                 }
-
-                /*
-                Accept(&client_sockfd, server_sockfd, ptr_client_address, &client_len );
-
-                
-                if( (pid = fork()) == 0){
-                    Close(server_sockfd);
-                    
-                    int c = 5;
-                    while (c-->0){
-                        snprintf(o_buffer,BUFSIZE, "Inserisci una stringa\n");
-                        FullWrite(client_sockfd, o_buffer, (size_t)BUFSIZE);
-
-                        FullRead(client_sockfd, i_buffer, (size_t)BUFSIZE);
-
-                        snprintf(o_buffer, BUFSIZE, "Numero di caratteri: %d\n", count_letters(i_buffer));
-                        FullWrite(client_sockfd, o_buffer, (size_t)BUFSIZE);
-                    }
-
-                    Close(client_sockfd);
-                    exit(0);
-
-                }else if(pid > 0){
-                    //Logging
-                    char buffer[BUFSIZE];
-                    char *ipaddress = inet_ntoa(client_address.sin_addr);
-                    printf("Nuova connessione:\tnumero: %d\tindirizzo ip: %s\n", ++counter, ipaddress);
-
-                    Close(client_sockfd);
-                }else{
-                    perror("Error while forking\n");
-                    exit(1);
-                }
-                */
             
 	}
 
