@@ -54,7 +54,10 @@ int main(int argc, char *argv[]){
         struct sockaddr_in addr; //address
         struct sockaddr_in peer_addr;
 
-        char i_buffer[BUFSIZE],o_buffer[BUFSIZE], code[17];
+        char i_buffer[BUFSIZE],o_buffer[BUFSIZE];
+
+        char *code = (char *)malloc(sizeof(char)*16);
+        
         char *IPaddress;
 
         struct sockaddr_in * ptr_address = &addr;
@@ -87,7 +90,8 @@ int main(int argc, char *argv[]){
         FullWrite(peer_sockfd, o_buffer, BUFSIZE);
         Close(sockfd); //Chiudi connessione
 
-        strncpy(code, i_buffer, (size_t)16);
+        strncpy(code, i_buffer, 16);
+        printf("code: %s|vado a capo\n",code);
 
         // Valido per 3 mesi
         struct tm* timeinfo = validity();
@@ -107,22 +111,27 @@ int main(int argc, char *argv[]){
                 exit(1);
         }
 
-        //printf("Inserisci la porta aperta dal processo server\n");
-        //fgets(i_buffer, BUFSIZE, stdin);
         port = atoi(argv[4]);
 
         Socket(&sockfd);
         makeSockaddr(ptr_address, IPaddress, port, &len);
         Connect(sockfd, ptr_address, len); // Connetti
 
+        /*
         memset(o_buffer,0,BUFSIZE);
-        for(int i=0; i<17; i++){
+        for(int i=0; i<16; i++){
                 if (code[i]=='\n')
                         code[i]='\0';
-        }
+        }*/
 
-        snprintf(o_buffer, BUFSIZE, "CV|%s:%d-%d\n",code,timeinfo->tm_mon, 1900+timeinfo->tm_year);
+
+        memset(o_buffer,0,BUFSIZE);
+        snprintf(o_buffer, 31, "CV|%s:%d-%d",code,timeinfo->tm_mon, 1900+timeinfo->tm_year);
         printf("obuffer: %s\n",o_buffer);
+
+        FILE* f = fopen("test","a");
+        fprintf(f,"%s",o_buffer);
+        fclose(f);
 
         FullWrite(sockfd, o_buffer, BUFSIZE);
         FullRead(sockfd, i_buffer, BUFSIZE);

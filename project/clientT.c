@@ -69,7 +69,7 @@ int main(int argc, char *argv[]){
         char i;
         i = (char)  fgetc(stdin);
         c = atoi(&i);
-
+        
         snprintf(o_buffer, BUFSIZE+5, "CT|%s:%d", i_buffer, c );
 
         FullWrite(sockfd, o_buffer, BUFSIZE);

@@ -31,7 +31,7 @@ int main(int argc, char *argv[]){
         socklen_t len;
         struct sockaddr_in address; //address
 
-        char buffer[BUFSIZE];
+        char buffer[17];
         char *IPaddress;
 
         struct sockaddr_in * ptr_address = &address;
@@ -70,7 +70,8 @@ int main(int argc, char *argv[]){
                 }
         }
         */
-        fgets(buffer, BUFSIZE, stdin);
+        fgets(buffer, 17, stdin);
+        printf("buffer: %s\n",buffer);
 
         FullWrite(sockfd, buffer, BUFSIZE);
 
