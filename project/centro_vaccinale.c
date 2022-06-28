@@ -28,25 +28,6 @@ time_t rawtime;
 // - usare due socket diverse
 // - restituire un messaggio di errore al client in caso il codice sia già stato registrato
 
-const char* parse_string(char *string, size_t sz){
-
-        int c=0;
-
-        for(int i=0; i<sz;i++){
-                if (string[i+1] == ' ' || string[i+1] == '\n' || string[i+1] == '\0'){
-                        c = 1 + i;
-                        i = 20;
-                }
-        }
-
-        char *newstr = (char *)malloc(sizeof(char)*c);
-
-        strncpy(newstr,string,c);
-
-        return newstr;
-}
-
-
 int main(int argc, char *argv[]){
 
         int port, sockfd, peer_sockfd;
@@ -56,7 +37,7 @@ int main(int argc, char *argv[]){
 
         char i_buffer[BUFSIZE],o_buffer[BUFSIZE];
 
-        char *code = (char *)malloc(sizeof(char)*16);
+        char *code = (char *)malloc(sizeof(char)*CODE_MAXSIZE);
         
         char *IPaddress;
 
@@ -90,17 +71,10 @@ int main(int argc, char *argv[]){
         FullWrite(peer_sockfd, o_buffer, BUFSIZE);
         Close(sockfd); //Chiudi connessione
 
-        strncpy(code, i_buffer, 16);
-        printf("code: %s|vado a capo\n",code);
+        strncpy(code, i_buffer, CODE_MAXSIZE);
 
         // Valido per 3 mesi
         struct tm* timeinfo = validity();
-        //Connettiti a ServerV
-        //printf("Inserisci l'indirizzo o il nome simbolico del server a cui connettersi\n");
-        //fgets(i_buffer,(size_t)16, stdin);
-        //strncpy(IPaddress, i_buffer, (size_t)16);
-
-        //const char *ip = parse_string(IPaddress,16);
 
         struct hostent *host2 = gethostbyname(argv[3]);
 
@@ -117,21 +91,8 @@ int main(int argc, char *argv[]){
         makeSockaddr(ptr_address, IPaddress, port, &len);
         Connect(sockfd, ptr_address, len); // Connetti
 
-        /*
         memset(o_buffer,0,BUFSIZE);
-        for(int i=0; i<16; i++){
-                if (code[i]=='\n')
-                        code[i]='\0';
-        }*/
-
-
-        memset(o_buffer,0,BUFSIZE);
-        snprintf(o_buffer, 31, "CV|%s:%d-%d",code,timeinfo->tm_mon, 1900+timeinfo->tm_year);
-        printf("obuffer: %s\n",o_buffer);
-
-        FILE* f = fopen("test","a");
-        fprintf(f,"%s",o_buffer);
-        fclose(f);
+        snprintf(o_buffer, DATA_FORMAT_MAXSIZE_T, "CV|%s:%d-%d",code,timeinfo->tm_mon, 1900+timeinfo->tm_year);
 
         FullWrite(sockfd, o_buffer, BUFSIZE);
         FullRead(sockfd, i_buffer, BUFSIZE);
