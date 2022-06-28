@@ -27,11 +27,11 @@ int count_letters(char *string){
 
 int main(int argc, char *argv[]){
 
-        int port, sockfd;
+        int port=0, sockfd=0,c=0;
         socklen_t len;
         struct sockaddr_in address; //address
 
-        char buffer[17];
+        char buffer[CODE_MAXSIZE];
         char *IPaddress;
 
         struct sockaddr_in * ptr_address = &address;
@@ -58,20 +58,13 @@ int main(int argc, char *argv[]){
         Connect(sockfd, ptr_address, len); // Connetti
 
         printf("Inserisci il codice fiscale\n");
-        
-        int c = 0;
-        /*
-        while ( c != 16){
-                fgets(buffer, BUFSIZE, stdin);
-                c = count_letters(buffer);
-                if ( c != 16){
-                        printf("\n\nCodice fiscale non corretto: i caratteri devono essere 16\n");
-                        printf("Inserisci il codice fiscale\n");
-                }
+
+        fgets(buffer, CODE_MAXSIZE, stdin);
+
+        for(int i=0;i<CODE_MAXSIZE;i++){
+                if (buffer[i]=='\n')
+                        buffer[i]='\0';
         }
-        */
-        fgets(buffer, 17, stdin);
-        printf("buffer: %s\n",buffer);
 
         FullWrite(sockfd, buffer, BUFSIZE);
 
@@ -80,7 +73,6 @@ int main(int argc, char *argv[]){
         printf("%s\n", buffer);
 
         Close(sockfd); //Chiudi connessione
-
 
         exit(0);
 }

@@ -15,12 +15,13 @@
 
 int main(int argc, char *argv[]){
 
-        int port, sockfd;
+        int port=0, sockfd=0, c=0;
         socklen_t len;
         struct sockaddr_in address; //address
 
         char i_buffer[BUFSIZE],o_buffer[BUFSIZE+3];
         char *IPaddress;
+        char i;
 
         struct sockaddr_in * ptr_address = &address;
 
@@ -41,36 +42,27 @@ int main(int argc, char *argv[]){
                 exit(1);
         }
 
-        Socket(&sockfd);
-        makeSockaddr(ptr_address, IPaddress, port, &len);
-        Connect(sockfd, ptr_address, len); // Connetti
-
-        printf("Inserisci il codice fiscale\n");
+        printf("Inserisci un codice fiscale\n");
         
-        int c = 0;
-        /*
-        while ( c != 16){
-                fgets(buffer, BUFSIZE, stdin);
-                c = count_letters(buffer);
-                if ( c != 16){
-                        printf("\n\nCodice fiscale non corretto: i caratteri devono essere 16\n");
-                        printf("Inserisci il codice fiscale\n");
-                }
-        }
-        */
-        fgets(i_buffer, BUFSIZE, stdin);
-        for(int i=0;i<16;i++){
+        fgets(i_buffer, CODE_MAXSIZE+2, stdin);
+        
+        for(int i=0;i<CODE_MAXSIZE+2;i++){
                 if (i_buffer[i]=='\n'){
                         i_buffer[i]='\0';
                 }
         }
+        
 
         printf("Scrivi 0 per invalidare il green pass, scrivi 1 per riprisintare la validità\n");
-        char i;
-        i = (char)  fgetc(stdin);
+
+        i = (char) fgetc(stdin);
         c = atoi(&i);
         
-        snprintf(o_buffer, BUFSIZE+5, "CT|%s:%d", i_buffer, c );
+        snprintf(o_buffer, BUFSIZE+6, "CT|%s:%d", i_buffer, c );
+
+        Socket(&sockfd);
+        makeSockaddr(ptr_address, IPaddress, port, &len);
+        Connect(sockfd, ptr_address, len); // Connetti
 
         FullWrite(sockfd, o_buffer, BUFSIZE);
 
@@ -79,7 +71,6 @@ int main(int argc, char *argv[]){
         printf("%s\n", i_buffer);
 
         Close(sockfd); //Chiudi connessione
-
 
         exit(0);
 }

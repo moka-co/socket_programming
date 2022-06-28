@@ -10,6 +10,12 @@
 #include <errno.h>
 #include <netdb.h>
 
+#define CODE_MAXSIZE 16
+#define DATA_FORMAT_MAXSIZE 26
+#define DATA_FORMAT_MAXSIZE_T 3+CODE_MAXSIZE+2
+
+#define FD_OPEN_MAXSIZE 10
+
 void Listen(int sockfd){
     if ( listen(sockfd, 5) != 0){
         perror("Error on listening\n");
@@ -114,20 +120,3 @@ int FullRead(int sockfd, char *buffer, size_t count){
     return totread;
 
 }
-
-void print_hostent(struct hostent * host){
-        if (host == 0){
-                printf("Host is null\n");
-                return;
-        }
-
-        printf("host: \n");
-        printf("\th_name: %s\n",host->h_name);
-        printf("\taddr_type: %d\n", host->h_addrtype);
-        printf("\th_length: %d\n", host->h_length);
-        char *stuff = host->h_addr_list[0];
-        printf("\th_addr_list: %s\n", inet_ntoa( *((struct in_addr*)stuff) ) );
-        printf("\n########################################\n");
-
-}
-

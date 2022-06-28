@@ -21,12 +21,8 @@ int main(int argc, char *argv[]){
 
         socklen_t len;
         int offset = 0;
-        int pid;
-        int port;
-
-        int portv;
-
-        int server_sockfd, client_sockfd, sockfdV;
+        int port=0, portv=0;
+        int server_sockfd=0, client_sockfd=0, sockfdV=0;
 
         struct sockaddr_in client_address;
         struct sockaddr_in * ptr_client_address = &client_address;
@@ -37,8 +33,6 @@ int main(int argc, char *argv[]){
         struct sockaddr_in serverV_address;
         struct sockaddr_in * ptr_serverV_address = &serverV_address;
 
-        char IPaddress[INET_ADDRSTRLEN];
-        char IPaddressV[INET_ADDRSTRLEN];
         char *ip, *ipv;
 
         char i_buffer[BUFSIZE], o_buffer[BUFSIZE], l_buffer[BUFSIZE];
@@ -73,13 +67,12 @@ int main(int argc, char *argv[]){
         int list_fd = server_sockfd;
         int fd=-1;
         int maxfd = list_fd; 
-        int fd_open[maxfd+5]; //maxfd+5 è un numero magico e va sostituto con una costante
+        int fd_open[FD_OPEN_MAXSIZE]; 
 
-        for(int i=0;i<maxfd+5;i++) fd_open[i]=0;
+        for(int i=0;i<FD_OPEN_MAXSIZE;i++) fd_open[i]=0;
 
         int n=0,i=0;
         fd_open[maxfd] = 1;
-        FD_SET(list_fd, &set);
         
         while(1){
                 
@@ -146,56 +139,26 @@ int main(int argc, char *argv[]){
                             strcpy(l_buffer, i_buffer); //Utilizziamo un buffer locale perché i_buffer potrebbe essere usato anche da altri client che si collegano.
 
                             // Si potrebbero togliere questi due if visto che fanno le stesse operazioni, basterebbe controllare solo se la sigla iniziale è giusta <------- TEST
-                            if ( (strncmp(l_buffer,"CS",2)) == 0){
+                            if ( (strncmp(l_buffer,"CS",2)) == 0 ){
                                 FullWrite(sockfdV, l_buffer, (size_t)BUFSIZE); //Passa la stringa presa da clientT a serverG                       
                                 FullRead(sockfdV, l_buffer, (size_t)BUFSIZE);  //Leggi la risposta di serverV
                                 FullWrite(i, l_buffer, (size_t)BUFSIZE); //Invia la risposta a 
-                            }else if( (strncmp(l_buffer,"CT",2)) == 0){
 
-                                FullWrite(sockfdV, l_buffer, (size_t)BUFSIZE); //Passa la stringa presa da clientT a serverG
+                            }else if( (strncmp(l_buffer,"CT",2)) == 0 ){
+
+                                //FullWrite(sockfdV, l_buffer, (size_t)BUFSIZE); //Passa la stringa presa da clientT a serverG
+                                FullWrite(sockfdV, l_buffer, DATA_FORMAT_MAXSIZE_T);
                                 //Il serverV si occuperà del parsing e capirà cosa farci con la stringa
                                 FullRead(sockfdV, l_buffer, (size_t)BUFSIZE); //Leggi la risposta da serverV
                                 FullWrite(i, l_buffer, (size_t)BUFSIZE); //Invia a clientT la risposta di serverV
+                            }else{
+                                FullWrite(i, "Errore non capisco la richiesta\n", (size_t)BUFSIZE);
                             }
                             memset(l_buffer, 0, BUFSIZE);
                             Close(sockfdV);
                         }
                     }
                 }
-
-                /*
-                Accept(&client_sockfd, server_sockfd, ptr_client_address, &client_len );
-
-                
-                if( (pid = fork()) == 0){
-                    Close(server_sockfd);
-                    
-                    int c = 5;
-                    while (c-->0){
-                        snprintf(o_buffer,BUFSIZE, "Inserisci una stringa\n");
-                        FullWrite(client_sockfd, o_buffer, (size_t)BUFSIZE);
-
-                        FullRead(client_sockfd, i_buffer, (size_t)BUFSIZE);
-
-                        snprintf(o_buffer, BUFSIZE, "Numero di caratteri: %d\n", count_letters(i_buffer));
-                        FullWrite(client_sockfd, o_buffer, (size_t)BUFSIZE);
-                    }
-
-                    Close(client_sockfd);
-                    exit(0);
-
-                }else if(pid > 0){
-                    //Logging
-                    char buffer[BUFSIZE];
-                    char *ipaddress = inet_ntoa(client_address.sin_addr);
-                    printf("Nuova connessione:\tnumero: %d\tindirizzo ip: %s\n", ++counter, ipaddress);
-
-                    Close(client_sockfd);
-                }else{
-                    perror("Error while forking\n");
-                    exit(1);
-                }
-                */
             
 	}
 
