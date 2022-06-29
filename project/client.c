@@ -10,18 +10,7 @@
 #include "wrapped.h"
 
 
-int count_letters(char *string){
-    int i=0, c=0;
 
-    while (string[i] != '\0'){
-        if (string[i] != ' ' && string[i] != '\n' && string[i] != '\0'){
-            c++;
-        }
-        i++;
-    }
-
-    return c;
-}
 
 int main(int argc, char *argv[]){
 
