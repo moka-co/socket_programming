@@ -9,9 +9,6 @@
 
 #include "wrapped.h"
 
-
-
-
 int main(int argc, char *argv[]){
 
         int port=0, sockfd=0,c=0;
