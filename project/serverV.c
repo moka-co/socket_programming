@@ -228,8 +228,7 @@ int main(int argc, char *argv[]){
         fd_open[maxfd] = 1;
         
         while(1){
-                //Questo blocco di istruzioni fino alla parentesi
-                // c'è perché nel manuale di select si legge che bisogna reistanziare il set prima di ogni chiamata select() su un set.
+                //Reistanziamento di set
                 FD_ZERO(&set);
                 for(int i=list_fd;i<=maxfd;i++){ //Setta i file descriptor da list_fd a max_fd dentro set
                     if (fd_open[i]!= 0){
