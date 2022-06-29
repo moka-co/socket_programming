@@ -10,39 +10,41 @@
 
 #include "wrapped.h"
 
+struct tm* expires_on(){
+        time_t rawtime;
+        struct tm * timeinfo;
+        
+        time (&rawtime);
+        timeinfo = localtime (&rawtime);
+    
+        if (timeinfo->tm_mon + 3 > 11 ){
+                timeinfo->tm_year += 1;
+                timeinfo->tm_mon = (timeinfo->tm_mon + 3)%11;
+        }else{
+        timeinfo->tm_mon = timeinfo->tm_mon + 3;
+        }
 
-#define BUFSIZE 1024
-
-struct tm* validity(){
-time_t rawtime;
-    struct tm * timeinfo;
-
-    time (&rawtime);
-    timeinfo = localtime (&rawtime);
-    timeinfo->tm_mon = timeinfo->tm_mon + 3;
-
-    return timeinfo;
+        return timeinfo;
 }
-
-// TODO
-// - usare due socket diverse
-// - restituire un messaggio di errore al client in caso il codice sia già stato registrato
 
 int main(int argc, char *argv[]){
 
-        int port, sockfd, peer_sockfd;
+        int port, portV;
+        int sockfd, peer_sockfd, sockfdV;
         socklen_t len = BUFSIZE, plen = BUFSIZE;
         struct sockaddr_in addr; //address
         struct sockaddr_in peer_addr;
+        struct sockaddr_in addrV;
 
         char i_buffer[BUFSIZE],o_buffer[BUFSIZE];
 
         char *code = (char *)malloc(sizeof(char)*CODE_MAXSIZE);
         
-        char *IPaddress;
+        char *ip, *ipv;
 
         struct sockaddr_in * ptr_address = &addr;
         struct sockaddr_in * ptr_peer_address = &peer_addr;
+        struct sockaddr_in * ptr_addrV = &addrV;
 
         if (argc < 5){
                 fprintf(stderr, "Inserisci un indirizzo e una porta in input da cui un client può connettersi e un indirizzo e la porta del server V\n");
@@ -51,11 +53,11 @@ int main(int argc, char *argv[]){
 
         port = atoi(argv[2]);
         struct hostent * host = gethostbyname(argv[1]);
-        IPaddress = inet_ntoa( *((struct in_addr*)host->h_addr_list[0]) );
+        ip = inet_ntoa( *((struct in_addr*)host->h_addr_list[0]) );
 
-        //Crea la socket per accettare connessioni dal client
+        //Crea la socket per accettare connessioni dal peer
         Socket(&sockfd);
-        makeSockaddr(ptr_address, IPaddress, port, &len);
+        makeSockaddr(ptr_address, ip, port, &len);
         Bind(sockfd, ptr_address, len);
         Listen(sockfd);
 
@@ -64,40 +66,39 @@ int main(int argc, char *argv[]){
         //Leggi il codice fiscale
         FullRead(peer_sockfd, i_buffer, BUFSIZE);
 
-        printf("Ricevuto codice fiscale: %s\n", i_buffer);
+        Close(sockfd); //Chiudi la socket per accettare nuove connessioni
 
-        //Segnala al client che hai ricevuto con successo i dati
-        snprintf(o_buffer,BUFSIZE,"Codice fiscale ricevuto con successo\n");
-        FullWrite(peer_sockfd, o_buffer, BUFSIZE);
-        Close(sockfd); //Chiudi connessione
+        printf("Ricevuto codice fiscale: %s\n", i_buffer);
 
         strncpy(code, i_buffer, CODE_MAXSIZE);
 
-        // Valido per 3 mesi
-        struct tm* timeinfo = validity();
+        struct tm* timeinfo = expires_on(); // Valido per 3 mesi
 
         struct hostent *host2 = gethostbyname(argv[3]);
 
         if (host2 != NULL){
-                IPaddress = inet_ntoa( *((struct in_addr*)host2->h_addr_list[0]) );
+                ipv = inet_ntoa( *((struct in_addr*)host2->h_addr_list[0]) );
         }else{
                 herror("Error: ");
                 exit(1);
         }
 
-        port = atoi(argv[4]);
+        portV = atoi(argv[4]);
 
-        Socket(&sockfd);
-        makeSockaddr(ptr_address, IPaddress, port, &len);
-        Connect(sockfd, ptr_address, len); // Connetti
+        //Connessione con il server V
+        Socket(&sockfdV);
+        makeSockaddr(ptr_addrV, ipv, portV, &len);
+        Connect(sockfdV, ptr_addrV, len); 
 
         memset(o_buffer,0,BUFSIZE);
         snprintf(o_buffer, DATA_FORMAT_MAXSIZE_T, "CV|%s:%d-%d",code,timeinfo->tm_mon, 1900+timeinfo->tm_year);
 
-        FullWrite(sockfd, o_buffer, BUFSIZE);
-        FullRead(sockfd, i_buffer, BUFSIZE);
+        FullWrite(sockfdV, o_buffer, BUFSIZE); //Invia al serverV i dati da memorizzare nel formato opportuno
+        FullRead(sockfdV, i_buffer, BUFSIZE); //Leggi la risposta del serverV
         printf("%s\n",i_buffer);
-        Close(sockfd);
+        Close(sockfdV); //Chiudi la connessione con serverV
+
+        FullWrite(peer_sockfd, i_buffer, BUFSIZE); //Invia la risposta al client
 
         exit(0);
 }

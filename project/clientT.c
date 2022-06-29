@@ -10,9 +10,6 @@
 #include "wrapped.h"
 
 
-#define BUFSIZE 1024
-
-
 int main(int argc, char *argv[]){
 
         int port=0, sockfd=0, c=0;

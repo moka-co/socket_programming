@@ -12,9 +12,12 @@
 
 #define CODE_MAXSIZE 16
 #define DATA_FORMAT_MAXSIZE 26
-#define DATA_FORMAT_MAXSIZE_T 3+CODE_MAXSIZE+2
+#define DATA_FORMAT_MAXSIZE_T 3+DATA_FORMAT_MAXSIZE+2
 
 #define FD_OPEN_MAXSIZE 10
+
+#define BUFSIZE 1024
+
 
 void Listen(int sockfd){
     if ( listen(sockfd, 5) != 0){

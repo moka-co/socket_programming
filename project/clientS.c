@@ -9,9 +9,6 @@
 
 #include "wrapped.h"
 
-
-#define BUFSIZE 1024
-
 int count_letters(char *string){
     int i=0, c=0;
 
@@ -60,22 +57,13 @@ int main(int argc, char *argv[]){
         printf("Inserisci il codice fiscale\n");
         
         int c = 0;
-        /*
-        while ( c != 16){
-                fgets(buffer, BUFSIZE, stdin);
-                c = count_letters(buffer);
-                if ( c != 16){
-                        printf("\n\nCodice fiscale non corretto: i caratteri devono essere 16\n");
-                        printf("Inserisci il codice fiscale\n");
-                }
-        }
-        */
+
         fgets(i_buffer, BUFSIZE, stdin);
-        snprintf(o_buffer, BUFSIZE+3, "CS|%s", i_buffer );
+        snprintf(o_buffer, BUFSIZE+3, "CS|%s", i_buffer ); //Scrivi i dati nel formato accettato dal server
 
-        FullWrite(sockfd, o_buffer, BUFSIZE);
+        FullWrite(sockfd, o_buffer, BUFSIZE); //Invia i dati al server G
 
-        FullRead(sockfd, i_buffer, BUFSIZE);
+        FullRead(sockfd, i_buffer, BUFSIZE); //Leggi la risposta
 
         printf("%s\n", i_buffer);
 

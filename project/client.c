@@ -10,8 +10,6 @@
 #include "wrapped.h"
 
 
-#define BUFSIZE 1024
-
 int count_letters(char *string){
     int i=0, c=0;
 
@@ -31,7 +29,7 @@ int main(int argc, char *argv[]){
         socklen_t len;
         struct sockaddr_in address; //address
 
-        char buffer[CODE_MAXSIZE];
+        char buffer[CODE_MAXSIZE+1];
         char *IPaddress;
 
         struct sockaddr_in * ptr_address = &address;
@@ -59,9 +57,9 @@ int main(int argc, char *argv[]){
 
         printf("Inserisci il codice fiscale\n");
 
-        fgets(buffer, CODE_MAXSIZE, stdin);
+        fgets(buffer, CODE_MAXSIZE+1, stdin);
 
-        for(int i=0;i<CODE_MAXSIZE;i++){
+        for(int i=0;i<CODE_MAXSIZE+1;i++){
                 if (buffer[i]=='\n')
                         buffer[i]='\0';
         }

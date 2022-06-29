@@ -11,10 +11,6 @@
 
 #include "wrapped.h"
 
-// TODO
-
-#define BUFSIZE 1024
-
 int counter = 0;
 
 int main(int argc, char *argv[]){
@@ -57,7 +53,7 @@ int main(int argc, char *argv[]){
         ip = inet_ntoa( *((struct in_addr*)host->h_addr_list[0]) );
         ipv = inet_ntoa( *((struct in_addr*)hostV->h_addr_list[0]) );
 
-        //Crea la socket del proprio server
+        //Crea la socket per accettare connessioni
         Socket(&server_sockfd); //socket creation:
         makeSockaddr(ptr_server_address,ip, port, &len);
         Bind(server_sockfd, ptr_server_address, len);
@@ -74,7 +70,7 @@ int main(int argc, char *argv[]){
         int n=0,i=0;
         fd_open[maxfd] = 1;
         
-        while(1){
+        while(1){ //Multiplexing
                 
                 FD_ZERO(&set); //Bisogna reistanziare set prima di ogni chiamata select() su uno stesso set
                 for(int i=list_fd;i<=maxfd;i++){ //Setta i file descriptor da list_fd a max_fd dentro set
@@ -135,16 +131,15 @@ int main(int argc, char *argv[]){
                             makeSockaddr(ptr_serverV_address, ipv, portv, &len);
                             Connect(sockfdV, ptr_serverV_address, len); // Connettiti a serverV
                             
-                            printf("buffer: %s\n",i_buffer); //Si può togliere
+                            printf("buffer: %s\n",i_buffer); 
                             strcpy(l_buffer, i_buffer); //Utilizziamo un buffer locale perché i_buffer potrebbe essere usato anche da altri client che si collegano.
 
-                            // Si potrebbero togliere questi due if visto che fanno le stesse operazioni, basterebbe controllare solo se la sigla iniziale è giusta <------- TEST
-                            if ( (strncmp(l_buffer,"CS",2)) == 0 ){
-                                FullWrite(sockfdV, l_buffer, (size_t)BUFSIZE); //Passa la stringa presa da clientT a serverG                       
+                            if ( (strncmp(l_buffer,"CS",2)) == 0 ){ //Caso in cui si è ricevuta una stringa da Client S
+                                FullWrite(sockfdV, l_buffer, (size_t)BUFSIZE); //Passa la stringa presa da clientS a serverG                       
                                 FullRead(sockfdV, l_buffer, (size_t)BUFSIZE);  //Leggi la risposta di serverV
                                 FullWrite(i, l_buffer, (size_t)BUFSIZE); //Invia la risposta a 
 
-                            }else if( (strncmp(l_buffer,"CT",2)) == 0 ){
+                            }else if( (strncmp(l_buffer,"CT",2)) == 0 ){ //Caso in cui si è ricevuta una stringa da Client T
 
                                 //FullWrite(sockfdV, l_buffer, (size_t)BUFSIZE); //Passa la stringa presa da clientT a serverG
                                 FullWrite(sockfdV, l_buffer, DATA_FORMAT_MAXSIZE_T);
@@ -155,7 +150,7 @@ int main(int argc, char *argv[]){
                                 FullWrite(i, "Errore non capisco la richiesta\n", (size_t)BUFSIZE);
                             }
                             memset(l_buffer, 0, BUFSIZE);
-                            Close(sockfdV);
+                            Close(sockfdV); //Chiudi la connessione al server V
                         }
                     }
                 }

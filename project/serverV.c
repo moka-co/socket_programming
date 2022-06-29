@@ -11,12 +11,6 @@
 
 #include "wrapped.h"
 
-
-#define BUFSIZE 1024
-
-//TODO
-//Gestire il caso di Green Pass scaduto per CS
-
 int counter = 0;
 const char* filename = "data"; 
 
@@ -98,6 +92,12 @@ int save_data(char *buffer, size_t sz){
 }
 
 int is_valid(char *buffer, size_t sz){
+    time_t rawtime;
+    struct tm * timeinfo;
+    time(&rawtime);
+    timeinfo = localtime (&rawtime);
+
+
     struct data_formatv saved;
     saved.code = (char *)malloc(sizeof(char)*CODE_MAXSIZE);
 
@@ -113,14 +113,22 @@ int is_valid(char *buffer, size_t sz){
 
             c1 = count_letters(saved.code);
             if ( (c1 == c2) && strncmp(readbuffer, buffer, c1) == 0){
+                if (saved.valid == 1){ //Se è valido, controlla che non sia scaduto
+                    if ( saved.year == (timeinfo->tm_year +1900) && saved.month < timeinfo->tm_mon){ //Scaduto
+                        return 0;
+                    }
+                    if (saved.year < timeinfo->tm_year+1900){ //Scaduto
+                        return 0;
+                    }
+                }
                 return saved.valid;
             }
             memset(readbuffer,0,sz);
             memset(saved.code, 0, CODE_MAXSIZE);
         }
-        fclose(data);
-        return -1; //codice non registrato
+        fclose(data);    
     }
+    return -1; //codice non registrato
 
 }
 
@@ -159,13 +167,11 @@ int validate(char *buffer, size_t sz){
             memset(readbuffer,0,sz); //pulisci il buffer
 
         }
-        fclose(data);
-        return -1; //codice non trovato
-
+        fclose(data);      
     }else{
         perror("Non posso aprire il file\n");
-        exit(1);
     }
+    return -1; //codice non trovato
 
 }
 
@@ -210,8 +216,6 @@ int main(int argc, char *argv[]){
         Bind(server_sockfd, ptr_server_address, len);
         Listen(server_sockfd);
 
-        signal(SIGCHLD, SIG_IGN);
-
         fd_set set;
         int list_fd = server_sockfd;
         int fd=-1;
@@ -253,7 +257,7 @@ int main(int argc, char *argv[]){
                 i = list_fd; //parti dal list_fd
 
                 while(n!=0){ //Cicla finché ci sono connessioni attive
-                    i++; //Tipicamente 0 1 2 sono input,output ed error, 3 è listening, partiamo da 4
+                    i++; 
                     if (fd_open[i] == 0){ //se è messo a 0, la connessione è chiusa quindi passa al successivo
                         continue;
                     }
