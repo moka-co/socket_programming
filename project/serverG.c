@@ -30,6 +30,7 @@ int main(int argc, char *argv[]){
         struct sockaddr_in * ptr_serverV_address = &serverV_address;
 
         char *ip, *ipv;
+        char myip[16];
 
         char i_buffer[BUFSIZE], o_buffer[BUFSIZE], l_buffer[BUFSIZE];
         socklen_t client_len = sizeof(client_address);
@@ -42,15 +43,21 @@ int main(int argc, char *argv[]){
         port = atoi(argv[2]);
         struct hostent * host = gethostbyname(argv[1]);
 
+        if (host == NULL){
+            fprintf(stderr, "Bad Address\n");
+            exit(1);
+        }
+        ip = inet_ntoa( *((struct in_addr*)host->h_addr_list[0]) );
+        strcpy(myip,ip);
+
         portv = atoi(argv[4]);
         struct hostent * hostV = gethostbyname(argv[3]);
 
-        if (host == NULL || hostV == NULL){
+        if ( hostV == NULL){
                 fprintf(stderr, "Bad Address\n");
                 exit(1);
         }
-
-        ip = inet_ntoa( *((struct in_addr*)host->h_addr_list[0]) );
+        
         ipv = inet_ntoa( *((struct in_addr*)hostV->h_addr_list[0]) );
 
         //Crea la socket per accettare connessioni
