@@ -8,6 +8,8 @@
 #include <stdio.h>
 #include <signal.h>
 #include <sys/select.h>
+#include <error.h>
+#include <fcntl.h>
 
 #include "wrapped.h"
 
@@ -20,6 +22,16 @@ struct data_formatv {
     int year; //L'anno
     int valid; //Validità
 };
+
+void create_file(){
+    int fd = open(filename, O_RDWR | O_CREAT | O_EXCL, 777);
+
+    if(fd == -1 && errno != EEXIST){
+        fprintf(stderr,"Cannot create file ""data""\n");
+        exit(1);
+    }
+    close(fd);
+}
 
 int count_letters(char *string){
     int i=0, c=-1;
@@ -195,6 +207,8 @@ int main(int argc, char *argv[]){
 
         char i_buffer[BUFSIZE], o_buffer[BUFSIZE], l_buffer[BUFSIZE];
         socklen_t client_len = sizeof(client_address);
+
+        create_file();
 
         if (argc < 3){
                 fprintf(stderr, "Inserisci un indirizzo e una porta in input\n");
