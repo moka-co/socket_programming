@@ -62,7 +62,7 @@ int main(int argc, char *argv[]){
 
         //Crea la socket per accettare connessioni
         Socket(&server_sockfd); //socket creation:
-        makeSockaddr(ptr_server_address,ip, port, &len);
+        makeSockaddr(ptr_server_address,myip, port, &len);
         Bind(server_sockfd, ptr_server_address, len);
         Listen(server_sockfd);
 
